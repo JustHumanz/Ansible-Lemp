@@ -1,0 +1,44 @@
+---
+- hosts: dum1
+  become: yes
+  tasks:
+    - name: Install git
+      apt: pkg=git state=installed update_cache=true
+
+    - name: Install GlusterFS
+      apt:
+        pkg:
+              - htop
+              - make
+              - automake
+              - autoconf
+              - libtool
+              - flex
+              - bison
+              - pkg-config
+              - libssl-dev
+              - libxml2-dev
+              - python-dev
+              - libaio-dev
+              - libibverbs-dev
+              - librdmacm-dev
+              - libreadline-dev
+              - liblvm2-dev
+              - libglib2.0-dev
+              - liburcu-dev
+              - libcmocka-dev
+              - libsqlite3-dev
+              - libacl1-dev
+              - uuid-dev
+              - libtirpc-dev
+              - glusterfs-common
+        state: present
+    - git: 
+        repo: https://github.com/gluster/glusterfs
+        dest: var=lookup('env','HOME')
+        become: true
+        become_user: "{{ user }}"
+
+    - name: compile GlusterFS
+       become: yes
+         shell: cd ~/glusterfs && ./autoconfig && ./configure && make && make install

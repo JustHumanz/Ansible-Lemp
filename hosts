@@ -1,0 +1,4 @@
+[dum1]
+2001:470:24:309::10 ansible_user=humanz ansible_python_interpreter=/usr/bin/python3
+2001:470:24:309::20 ansible_user=humanz ansible_python_interpreter=/usr/bin/python3
+2001:470:24:309::30 ansible_user=humanz ansible_python_interpreter=/usr/bin/python3

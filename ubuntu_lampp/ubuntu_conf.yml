@@ -1,0 +1,104 @@
+---
+- hosts: dum1
+  become: yes
+  tasks:
+
+#===================Make directory
+        - name: Make nginx directory
+          shell : mkdir -p /home/{{ ansible_user }}/web/html
+
+#==================Change ownership
+        - name: change ownership
+          shell: chown {{ ansible_user }}:{{ ansible_user }} -R /home/{{ ansible_user }}/web/html
+
+#==================Check File default conf
+        - name: Ansible check(nginx.conf) file exists
+          stat:
+            path: /etc/nginx/nginx.conf
+          register: n
+
+        - name: Ansible check(nginx) file exists.
+          stat:
+            path: /etc/nginx/conf.d/default.conf
+          register: p
+
+        - name: Ansible check(php) file exists.
+          stat:
+            path: /etc/php/7.0/fpm/pool.d/www.conf
+          register: b
+
+#==================Make Backup default conf
+        - name: Make nginx.conf default conf
+          become: yes
+          copy:
+              remote_src: yes
+              src: /etc/nginx/nginx.conf
+              dest: /etc/nginx/nginx.conf.back
+          when: n.stat.exists
+
+        - name: Make nginx backup default config
+          become: yes
+          copy:
+            remote_src: yes
+            src: /etc/nginx/conf.d/default.conf
+            dest: /etc/nginx/conf.d/default.conf.back
+          when: p.stat.exists
+
+
+        - name: Make Php backup default config
+          become: yes
+          copy:
+            remote_src: yes
+            src: /etc/php/7.0/fpm/pool.d/www.conf
+            dest: /etc/php/7.0/fpm/pool.d/www.conf.back
+          when: b.stat.exists
+
+
+#==================Remove File default Conf
+        - name: Remove old files nginx.conf
+          file:
+            path: /etc/nginx/nginx.conf
+            state: absent
+          when: n.stat.exists
+
+        - name: Remove old files nginx default.conf
+          file:
+            path: /etc/nginx/conf.d/default.conf
+            state: absent
+          when: p.stat.exists
+
+        - name: Remove Php files www.conf
+          file:
+            path: /etc/php/7.0/fpm/pool.d/www.conf
+            state: absent
+          when: b.stat.exists
+
+#===================Set confing
+        - name: Configure nginx.conf
+          template: src=conf/nginx.conf dest=/etc/nginx/nginx.conf
+
+        - name: Configure nginx
+          template: src=conf/test.conf dest=/etc/nginx/conf.d/test.conf
+
+        - name: Configure php-fpm
+          template: src=conf/php.conf dest=/etc/php/7.0/fpm/pool.d/test.conf
+
+#==================add php.info and index.html
+        - name: Add php.info
+          shell: echo "<?php phpinfo();" > /home/{{ ansible_user }}/web/html/info.php
+
+        - name: Add nginx index.html
+          template: src=conf/index.html dest=/home/{{ ansible_user }}/web/html/index.html
+
+#==================Reload service
+        - name: Reload service nginx
+          systemd:
+            name: nginx
+            state: reloaded
+            daemon_reload: yes
+
+        - name: Reload php-fpm
+          systemd:
+            name: php7.0-fpm
+            state: reloaded
+            daemon_reload: yes

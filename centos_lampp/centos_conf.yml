@@ -1,0 +1,91 @@
+---
+- hosts: dum1
+  become: yes
+  tasks:
+
+        - name: Make nginx directory
+          shell : mkdir -p /home/{{ ansible_user }}/web/html
+
+        - name: change ownership
+          shell: chown {{ ansible_user }}:{{ ansible_user }} -R /home/{{ ansible_user }}/web/html
+
+        - name: Ansible check(nginx.conf) file exists
+          stat:
+            path: /etc/nginx/nginx.conf
+          register: n
+
+        - name: Make nginx.conf default conf
+          become: yes
+          copy:
+              remote_src: yes
+              src: /etc/nginx/nginx.conf
+              dest: /etc/nginx/nginx.conf.back
+          when: n.stat.exists
+
+        - name: Remove old files
+          file:
+            path: /etc/nginx/nginx.conf
+            state: absent
+          when: n.stat.exists
+
+        - name: Ansible check(nginx) file exists.
+          stat:
+            path: /etc/nginx/conf.d/default.conf
+          register: p
+
+        - name: Make nginx backup default config
+          become: yes
+          copy:
+            remote_src: yes
+            src: /etc/nginx/conf.d/default.conf
+            dest: /etc/nginx/conf.d/default.conf.back
+          when: p.stat.exists
+
+        - name: Remove old files foo
+          file:
+            path: /etc/nginx/conf.d/default.conf
+            state: absent
+          when: p.stat.exists
+
+        - name: Ansible check(php) file exists.
+          stat:
+            path: /etc/nginx/conf.d/default.conf
+          register: b
+
+        - name: Make nginx backup default config
+          become: yes
+          copy:
+            remote_src: yes
+            src: /etc/opt/remi/php72/php-fpm.d/www.conf
+            dest: /etc/opt/remi/php72/php-fpm.d/www.conf.back
+          when: b.stat.exists
+
+        - name: Remove old files foo
+          file:
+            path: /etc/opt/remi/php72/php-fpm.d/www.conf
+            state: absent
+          when: b.stat.exists
+
+        - name: Configure nginx.conf
+          template: src=conf/nginx.conf dest=/etc/nginx/nginx.conf
+
+        - name: Configure nginx
+          template: src=conf/test.conf dest=/etc/nginx/conf.d/test.conf
+
+        - name: Configure php-fpm
+          template: src=conf/php.conf dest=/etc/opt/remi/php72/php-fpm.d/test.conf
+
+        - name: Chmod Home directory
+          shell: chmod -R +x /home/{{ ansible_user }}/web/html
+
+        - name: Reload service nginx
+          systemd:
+            name: nginx
+            state: reloaded
+            daemon_reload: yes
+
+        - name: Reload php-fpm
+          systemd:
+            name: php72-php-fpm
+            state: reloaded
+            daemon_reload: yes

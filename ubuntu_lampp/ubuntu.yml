@@ -1,0 +1,42 @@
+---
+- hosts: dum1
+  become: yes
+  tasks:
+    - name: Install nginx
+      apt: pkg=nginx state=latest update_cache=true
+
+    - name: Install mariadb
+      apt: pkg=mariadb-server state=present update_cache=true
+
+    - name: Install vsftpd
+      apt: pkg=vsftpd state=present update_cache=true
+
+    - name: Install git
+      apt: pkg=git state=latest update_cache=true
+
+    - name: Install php
+      apt: pkg=php state=present update_cache=true
+
+    - name: Install Tools
+      apt:
+        pkg:
+              - nano
+              - vim
+              - net-tools
+              - git
+              - curl
+              - wget
+              - python-pip
+              - python3-pip
+        state: present
+
+
+  handlers:
+    - name: start nginx
+      service: name=nginx state=started
+    - name: start mariadb
+      service: name=mariadb state=started
+    - name: start vsftpd
+      service: name=vsftpd state=started
+    - name: start php-fpm
+      service: name=php7-fpm state=started

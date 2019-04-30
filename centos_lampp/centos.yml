@@ -1,0 +1,111 @@
+---
+- hosts: dum1
+  become: yes
+  tasks:
+    - name: Install repo
+      become: true
+      yum:
+        name:
+          - libselinux-python
+          - epel-release
+          - yum-utils
+    - name: Install the remi and ius repo from remote repo
+      become: true
+      yum:
+        name:
+            - "http://rpms.remirepo.net/enterprise/remi-release-{{ ansible_distribution_major_version }}.rpm"
+            - "https://centos{{ ansible_distribution_major_version }}.iuscommunity.org/ius-release.rpm"
+
+    - name: add repository nginx-release (CentOS6/CentOS7)
+      yum: name="http://nginx.org/packages/centos/{{ansible_distribution_major_version}}/noarch/RPMS/nginx-release-centos-{{ansible_distribution_major_version}}-0.el{{ansible_distribution_major_version}}.ngx.noarch.rpm"
+
+    - name: Update packages
+      become: true
+      yum:
+        name: "*"
+        state: latest
+      tags: skip_ansible_lint
+
+    - name: Install nginx
+      yum: pkg=nginx state=installed update_cache=true
+
+    - name: Install mariadb
+      yum: pkg=mariadb-server state=installed update_cache=true
+
+    - name: Install vsftpd
+      yum: pkg=vsftpd state=installed update_cache=true
+
+    - name: Install git
+      yum: pkg=git state=installed update_cache=true
+
+    - name: Install php
+      yum:
+        pkg:
+              - php72-php-fpm
+              - php72-php-gd
+              - php72-php-json
+              - php72-php-mbstring
+              - php72-php-mysqlnd
+              - php72-php-xml
+              - php72-php-xmlrpc
+              - php72-php-opcache
+    - name: Install Tools
+      yum:
+        pkg:
+              - nano
+              - htop
+              - vim
+              - net-tools
+              - git
+              - curl
+              - wget
+        state: present
+
+#Start service
+
+    - name: Start service nginx
+      systemd:
+        name: nginx
+        state: restarted
+        daemon_reload: yes
+
+    - name: Start service mariadb
+      systemd:
+        name: mariadb
+        state: restarted
+        daemon_reload: yes
+
+    - name: Start service php72
+      systemd:
+        name: php72-php-fpm
+        state: restarted
+        daemon_reload: yes
+
+    - name: Start service vsftp
+      systemd:
+        name: vsftpd
+        state: restarted
+        daemon_reload: yes
+
+#firewall
+    - firewalld:
+        service: https
+        permanent: yes
+        state: enabled
+
+
+    - firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+
+    - firewalld:
+        service: mysql
+        permanent: yes
+        state: enabled
+
+
+    - firewalld:
+        service: ftp
+        permanent: yes
+        state: enabled
